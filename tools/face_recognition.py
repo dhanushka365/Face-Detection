@@ -1,6 +1,9 @@
 import numpy as np
 import cv2
 import os
+from datetime import datetime
+import mysql.connector
+
 
 ########## KNN CODE ############
 def distance(v1, v2):
@@ -32,12 +35,13 @@ def knn(train, test, k=5):
 cap = cv2.VideoCapture(0)
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades +"haarcascade_frontalface_alt.xml")
 
-dataset_path = "C:/Users/Administrator/Desktop/Face Detection/tools/face_dataset/"
+dataset_path = "C:/Users/acer/Face-Detection/tools/face_dataset/"
 
 face_data = []
 labels = []
 class_id = 0
 names = {}
+
 
 
 # Dataset prepration
@@ -85,6 +89,40 @@ while True:
 		# Draw rectangle in the original image
 		cv2.putText(frame, names[int(out)],(x,y-10), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),2,cv2.LINE_AA)
 		cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 1)
+
+		# Get the current time
+		current_time = datetime.now()
+
+		# Format the time as per the MySQL datetime format
+		formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
+
+		#print name and time
+		print(names[int(out)])
+		print(formatted_time)
+
+		# Establish a connection to the MySQL database
+		connection = mysql.connector.connect(
+			host="localhost",
+			user="root",
+			password="",
+			database="face_recognition"
+		)
+
+		# Create a cursor object
+		cursor = connection.cursor()
+
+		# Define the INSERT query
+		insert_query = "INSERT INTO records (Time, Person) VALUES (%s, %s)"
+
+		# Execute the INSERT query
+		cursor.execute(insert_query, (formatted_time, names[int(out)]))
+
+		# Commit the changes to the database
+		connection.commit()
+
+		# Close the cursor and the connection
+		cursor.close()
+		connection.close()
 
 	cv2.imshow("Faces", frame)
 
